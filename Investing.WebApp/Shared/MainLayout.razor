@@ -1,0 +1,52 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>Investing</PageTitle>
+
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+
+<MudLayout>
+    <MudAppBar>
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudSpacer />
+        <MudToggleIconButton @bind-Toggled="@_isDarkMode"
+                             Icon="@Icons.Material.Filled.Brightness7" Color="@Color.Inherit" Title="Mudar para escuro"
+                             ToggledIcon="@Icons.Material.Filled.Brightness3" ToggledColor="@Color.Inherit" ToggledTitle="Mudar para claro" />        
+        <MudIconButton Icon="@Icons.Material.Filled.Person" Color="Color.Inherit" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="@_drawerOpen" Elevation="0" Variant="@DrawerVariant.Persistent" >
+        <MudDrawerHeader>
+            <MudLink Href="/"><MudText Typo="Typo.h6">Investing</MudText></MudLink>
+        </MudDrawerHeader>
+        <MudNavMenu>
+            <MudNavGroup Icon="@Icons.Material.Filled.Settings" Title="Configurações">
+                <MudNavLink Icon="@Icons.Material.Filled.Percent" Href="/assetClasses" Match="NavLinkMatch.Prefix">Classes de Ativos</MudNavLink>
+                <MudNavLink Icon="@Icons.Material.Filled.Wallet" Href="/wallet" Match="NavLinkMatch.Prefix">Carteira</MudNavLink>
+            </MudNavGroup>
+            <MudNavGroup Icon="@Icons.Material.Filled.Wallet" Title="Ativos">
+                <MudNavLink Icon="@Icons.Material.Filled.Add" Href="/newAsset" Match="NavLinkMatch.Prefix">Cadastrar Ativos</MudNavLink>
+                <MudNavLink Icon="@Icons.Material.Filled.MultipleStop" Href="/newMoviment" Match="NavLinkMatch.Prefix">Informar Movimento</MudNavLink>
+                <MudNavLink Icon="@Icons.Material.Filled.PieChart" Href="/assetAllocation" Match="NavLinkMatch.Prefix">Visualizar Alocação</MudNavLink>
+                <MudNavLink Icon="@Icons.Material.Filled.CalendarMonth" Href="/contribution" Match="NavLinkMatch.Prefix">Próximos Aportes</MudNavLink>
+            </MudNavGroup>            
+        </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent Class="pt-16 px-16">
+         <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-6">
+            @Body
+         </MudContainer>        
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private MudTheme _theme = new();
+    private bool _isDarkMode = true;
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}
