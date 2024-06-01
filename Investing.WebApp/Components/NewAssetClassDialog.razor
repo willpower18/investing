@@ -1,0 +1,25 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" sm="12">
+                <MudForm>
+                    <MudTextField T="string" Label="Nome" Required="true" RequiredError="O campo nome é obrigatório" />
+                    <MudTextField T="string" Label="Descrição" Required="true" RequiredError="O campo descrição é obrigatório" />
+                </MudForm>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Voltar</MudButton>
+        <MudButton Color="Color.Primary">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }    
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

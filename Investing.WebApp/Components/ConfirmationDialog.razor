@@ -1,0 +1,36 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" sm="12">
+                <MudText>Tem Certeza de que deseja realizar esta ação?</MudText>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Nao</MudButton>
+        <MudButton OnClick="Confirmar" Color="Color.Primary">Sim</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    public bool Confirmado { get; set; }
+
+    public void Confirmar()
+    {
+        Confirmado = true;
+        FecharDialog();
+    }
+
+    public void Cancelar()
+    {
+        Confirmado = false;
+        FecharDialog();
+    }
+
+    private void FecharDialog()
+    {
+        MudDialog.Close(DialogResult.Ok(Confirmado));
+    }
+}

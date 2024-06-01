@@ -1,7 +1,105 @@
 ﻿@page "/assetClasses"
+@using Investing.WebApp.Components
+@using System.Linq;
+@inject IDialogService Dialog
 
-<h3>assetClasses</h3>
+<MudGrid>
+    <MudItem xs="12">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Classes de Ativos</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenDialog" />
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTable Items="@assets" Bordered="true" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Primary">
+                            <HeaderContent>
+                                <MudTh>Id</MudTh>
+                                <MudTh>Nome</MudTh>
+                                <MudTh>Descrição</MudTh>
+                                <MudTh>Ações</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Nr">@context.Id</MudTd>
+                                <MudTd DataLabel="Name">@context.Name</MudTd>
+                                <MudTd DataLabel="Name">@context.Description</MudTd>
+                                <MudTd DataLabel="Ações">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="() => RemoverItem(context.Id)" Color="Color.Error"></MudIconButton>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudItem>
+                </MudGrid>                
+            </MudCardContent>
+            <MudCardActions>                
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>
 
 @code {
 
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+
+    private List<AssetClasses> assets = new List<AssetClasses>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        assets = new List<AssetClasses>(){
+            new AssetClasses(){ Id = 1, Name = "Ações Brasileiras" },
+            new AssetClasses(){ Id = 2, Name = "Ações Internacionais" },
+            new AssetClasses(){ Id = 3, Name = "Real State" },
+            new AssetClasses(){ Id = 4, Name = "Renda Fixa" }
+        };
+    }    
+
+    private async Task RemoverItem(int id)
+    {
+        var options = new DialogOptions
+        {
+            FullWidth = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            CloseButton = false,
+            DisableBackdropClick = true,
+            NoHeader = false,
+            Position = DialogPosition.TopCenter,
+            CloseOnEscapeKey = false
+        };
+
+        var dialogResult = Dialog.Show<ConfirmationDialog>("Confirmação", options);
+        var result = await dialogResult.Result;
+        bool.TryParse(result.Data.ToString(), out bool confirmado);
+        if (!result.Cancelled && confirmado)
+            RemoveItem(id);
+
+    }
+
+    private void RemoveItem(int id)
+    {
+        var item = assets.Where(i => i.Id == id).FirstOrDefault();
+        if (item != null)
+            assets.Remove(item);
+    }
+
+    private void OpenDialog()
+    {
+        var options = new DialogOptions { 
+            FullWidth = true,
+            MaxWidth = MaxWidth.Small,
+            CloseButton = true,
+            DisableBackdropClick = true,
+            NoHeader = false,
+            Position = DialogPosition.Center,
+            CloseOnEscapeKey = true
+        };
+
+        Dialog.Show<NewAssetClassDialog>("Nova Classe de Ativos", options);       
+    }
 }
