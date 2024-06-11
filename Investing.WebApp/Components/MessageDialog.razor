@@ -1,0 +1,32 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" sm="12">
+                <MudText>@Mensagem</MudText>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Confirmar" Color="Color.Primary">OK</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    public bool Confirmado { get; set; }
+
+    [Parameter]
+    public string Mensagem { get; set; }
+
+    public void Confirmar()
+    {
+        Confirmado = true;
+        FecharDialog();
+    }
+
+    private void FecharDialog()
+    {
+        MudDialog.Close(DialogResult.Ok(Confirmado));
+    }
+}
