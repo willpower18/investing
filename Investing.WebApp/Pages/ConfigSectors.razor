@@ -1,35 +1,47 @@
-﻿@page "/wallet"
+﻿@page "/configSectors"
 @using Investing.WebApp.Models
 @using Investing.WebApp.Components
+@using System.Linq;
 @inject IDialogService Dialog
+
 
 <MudGrid>
     <MudItem xs="12">
         <MudCard>
             <MudCardHeader>
                 <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Carteira</MudText>
+                    <MudText Typo="Typo.h6">Configuração de Setores</MudText>
                 </CardHeaderContent>
-                <CardHeaderActions>                    
+                <CardHeaderActions>
                 </CardHeaderActions>
             </MudCardHeader>
             <MudCardContent>
+                <MudGrid Style="margin-bottom:15px;">
+                    <MudItem xs="12">
+                        <MudSelect T="int" Label=" Classe de Ativos" SelectedValuesChanged="LoadSectorsByAssetClass" Placeholder="Selecione uma classe de ativos" @bind-Value="@AssetClassId" AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var assetClass in AssetClasses)
+                            {
+                                <MudSelectItem Value="@(assetClass.Key)">@(assetClass.Value)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
                 <MudGrid>
-                    <MudItem xs="6">                        
+                    <MudItem xs="6">
                         @foreach (var item in WalletPercentages)
                         {
                             <MudGrid>
                                 <MudItem xs="6">
-                                    <MudSelect T="int" Label="Classe de Ativos" SelectedValuesChanged="() => ValidateSelectedAssetClass(item.Line, item.AssetClassId)" Placeholder="Selecione uma classe de ativos" @bind-Value="@item.AssetClassId" AnchorOrigin="Origin.BottomCenter">
-                                        @foreach(var assetClass in AssetClasses)
+                                    <MudSelect T="int" Label="Setores" SelectedValuesChanged="() => ValidateSelectedSector(item.Line, item.SectorId)" Placeholder="Selecione um setor" @bind-Value="@item.SectorId" AnchorOrigin="Origin.BottomCenter">
+                                        @foreach (var sector in SectorsByAssetClass)
                                         {
-                                            <MudSelectItem Value="@(assetClass.Key)">@(assetClass.Value)</MudSelectItem>
+                                            <MudSelectItem Value="@(sector.SectorId)">@(sector.Name)</MudSelectItem>
                                         }
                                     </MudSelect>
                                 </MudItem>
                                 <MudItem xs="5">
                                     <MudSlider @onchange="() => AddValueToPieChart(item.Percentage, item.Line)" @bind-Value="@item.Percentage" Max="100">Percentual: @item.Percentage.ToString("#0.00")%</MudSlider>
-                                    <MudHidden ></MudHidden>
+                                    <MudHidden></MudHidden>
                                 </MudItem>
                                 <MudItem xs="1" Class="d-flex align-center justify-center mud-width-full py-8">
                                     <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error" OnClick="() => RemoveItemFromList(item.Line)"></MudIconButton>
@@ -37,11 +49,14 @@
                             </MudGrid>
                             <MudDivider Style="margin-top:20px; margin-bottom:10px;"></MudDivider>
                         }
-                        
-                        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddItemToList"></MudIconButton>
+
+                        @if (AssetClassId != 0)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Add" Title="Adicionar Configuração de Setor" Color="Color.Primary" OnClick="AddItemToList"></MudIconButton>
+                        }                        
                     </MudItem>
                     <MudItem xs="6">
-                        <MudChart ChartType="ChartType.Pie"  InputData="@data" @bind-SelectedIndex="Index" InputLabels="@labels" Width="300px" Height="300px" />
+                        <MudChart ChartType="ChartType.Pie" InputData="@data" @bind-SelectedIndex="Index" InputLabels="@labels" Width="300px" Height="300px" />
                     </MudItem>
                 </MudGrid>
                 <MudButton Color="Color.Success">Salvar</MudButton>
@@ -53,7 +68,11 @@
 </MudGrid>
 
 @code {
-    private List<WalletPercentage> WalletPercentages = new();
+    private int AssetClassId = 0;
+    Sector SectorForInitialization = new Sector();
+    private List<SectorConfiguration> WalletPercentages = new();
+    List<Sector> AllSectors = new List<Sector>();
+    List<Sector> SectorsByAssetClass = new List<Sector>();
     private List<KeyValuePair<int, string>> AssetClasses = new();
     int contador = 0;
     double value = 50.0;
@@ -65,7 +84,7 @@
     string[] labels;
 
     DialogOptions dialogOptions = new DialogOptions
-    {
+        {
             FullWidth = true,
             MaxWidth = MaxWidth.ExtraSmall,
             CloseButton = false,
@@ -73,11 +92,13 @@
             NoHeader = false,
             Position = DialogPosition.TopCenter,
             CloseOnEscapeKey = false
-    };
+        };
 
     protected override async Task OnInitializedAsync()
     {
-        WalletPercentages = new List<WalletPercentage>();
+        SectorForInitialization = new Sector();
+        AllSectors = SectorForInitialization.ObterListaDeSetores();
+        WalletPercentages = new List<SectorConfiguration>();
         CreateOptionsList();
         data = new double[0];
         labels = new string[0];
@@ -92,28 +113,42 @@
         AssetClasses.Add(new KeyValuePair<int, string>(4, "Renda Fixa"));
     }
 
+    private void LoadSectorsByAssetClass()
+    {
+        if (WalletPercentages.Any())
+        {
+            WalletPercentages.Clear();
+            data = new double[0];
+            labels = new string[0];
+            AlreadyAdded = 0;
+            contador = 0;
+        }
+
+        SectorsByAssetClass = AllSectors.Where(s => s.AssetClassId == AssetClassId).ToList();
+    }
+
     private void AddItemToList()
-    {   
+    {
         if (AlreadyAdded >= 100)
         {
             OpenNewAssetClassValidationMessageModal();
             return;
         }
 
-        WalletPercentages.Add(new(){ AssetClassId = 0, Line = contador, Name = string.Empty, Percentage = 0 });
+        WalletPercentages.Add(new() { AssetClassId = AssetClassId, SectorId = 0, Line = contador, Name = string.Empty, Percentage = 0 });
         contador++;
     }
 
     private void RemoveItemFromList(int linha)
     {
         var percentage = WalletPercentages.Where(p => p.Line == linha).FirstOrDefault();
-        if(percentage != null)
+        if (percentage != null)
         {
-            var assetClassName = AssetClasses.Where(a => a.Key == percentage.AssetClassId).FirstOrDefault();
-            if (labels.Where(l => l == assetClassName.Value).Any())
+            var sectorName = AllSectors.Where(a => a.SectorId == percentage.SectorId).FirstOrDefault();
+            if (labels.Where(l => l == sectorName.Name).Any())
             {
                 var labelsToGetIndex = labels.ToList();
-                var index = labelsToGetIndex.IndexOf(assetClassName.Value);
+                var index = labelsToGetIndex.IndexOf(sectorName.Name);
                 if (index != -1)
                 {
                     data[index] = 0;
@@ -125,25 +160,25 @@
             }
 
             AlreadyAdded = AlreadyAdded - percentage.Percentage;
-            WalletPercentages.Remove(percentage);            
+            WalletPercentages.Remove(percentage);
         }
     }
 
-    private void ValidateSelectedAssetClass(int line, int id)
+    private void ValidateSelectedSector(int line, int id)
     {
-        if (WalletPercentages.Where(w => w.AssetClassId == id && w.Line != line).Any())
+        if (WalletPercentages.Where(w => w.SectorId == id && w.Line != line).Any())
         {
             var percToUpdate = WalletPercentages.Where(w => w.Line == line).FirstOrDefault();
-            if(percToUpdate != null)
+            if (percToUpdate != null)
             {
-                percToUpdate.AssetClassId = 0;
+                percToUpdate.SectorId = 0;
                 percToUpdate.Name = string.Empty;
                 percToUpdate.Percentage = 0;
             }
 
-            var assetClass = AssetClasses.Where(a => a.Key == id).FirstOrDefault();
-            OpenDuplicatedAssetClassValidationMessageModal(assetClass.Value);            
-        }        
+            var sector = AllSectors.Where(a => a.SectorId == id).FirstOrDefault();
+            OpenDuplicatedAssetClassValidationMessageModal(sector.Name);
+        }
     }
 
     private void AddValueToPieChart(double sliderValue, int linha)
@@ -153,12 +188,12 @@
         double leftValue = MaxValue - (AlreadyAdded - sliderValue);
         if (sliderValue > leftValue)
         {
-            OpenTotalValueValidationMessageModal(sliderValue);
+            OpenTotalValueValidationMessageModal(sliderValue, leftValue);
             ClearSliderValue(linha);
             return;
-        }        
+        }
 
-        if(AlreadyAdded >= 100)
+        if (AlreadyAdded >= 100)
         {
             double valorJaAdicionado = WalletPercentages.Sum(p => p.Percentage) - sliderValue;
             double valorTotalComNovoValor = valorJaAdicionado + sliderValue;
@@ -167,39 +202,39 @@
                 OpenValidationMessageModal(sliderValue);
                 ClearSliderValue(linha);
                 return;
-            }            
-        }       
-
-        var percentage = WalletPercentages.Where(w => w.Line == linha).FirstOrDefault();
-        string assetClassName = string.Empty;
-        if (percentage != null)
-        {
-            if(percentage.AssetClassId == 0)
-            {
-                RequiredAssetClassSelecionValidationMessageModal();
-                percentage.Percentage = 0;
-                return;    
             }
-
-            var assetClass = AssetClasses.Where(a => a.Key == percentage.AssetClassId).FirstOrDefault();
-            assetClassName = assetClass.Value;
-            percentage.Name = assetClass.Value;
         }
 
-        if(data.Length <= 0)
+        var percentage = WalletPercentages.Where(w => w.Line == linha).FirstOrDefault();
+        string sectorName = string.Empty;
+        if (percentage != null)
+        {
+            if (percentage.SectorId == 0)
+            {
+                RequiredSectorSelecionValidationMessageModal();
+                percentage.Percentage = 0;
+                return;
+            }
+
+            var sector = AllSectors.Where(a => a.SectorId == percentage.SectorId).FirstOrDefault();
+            sectorName = sector.Name;
+            percentage.Name = sector.Name;
+        }
+
+        if (data.Length <= 0)
         {
             data = new double[1];
             labels = new string[1];
             data[linha] = sliderValue;
-            labels[linha] = assetClassName;
+            labels[linha] = sectorName;
         }
         else
         {
-            if(labels.Where(l => l == assetClassName).Any())
+            if (labels.Where(l => l == sectorName).Any())
             {
                 var labelsToGetIndex = labels.ToList();
-                var index = labelsToGetIndex.IndexOf(assetClassName);
-                if(index != -1)
+                var index = labelsToGetIndex.IndexOf(sectorName);
+                if (index != -1)
                 {
                     data[index] = sliderValue;
                 }
@@ -215,25 +250,25 @@
             labels = new string[newLength];
 
             int counter = 0;
-            for(counter = 0; counter < oldData.Length; counter++)
+            for (counter = 0; counter < oldData.Length; counter++)
             {
                 data[counter] = oldData[counter];
                 labels[counter] = oldLabels[counter];
-            }                        
+            }
 
             if (linha > newLength - 1)
             {
                 data[counter] = sliderValue;
-                labels[counter] = assetClassName;
+                labels[counter] = sectorName;
             }
             else
             {
                 data[linha] = sliderValue;
-                labels[linha] = assetClassName;
+                labels[linha] = sectorName;
             }
         }
 
-        dataSize++;       
+        dataSize++;
     }
 
     private void ClearSliderValue(int line)
@@ -254,11 +289,10 @@
         var dialogResult = Dialog.Show<MessageDialog>("Atenção!", parameters, dialogOptions);
     }
 
-    private void OpenTotalValueValidationMessageModal(double value)
+    private void OpenTotalValueValidationMessageModal(double value, double leftValue)
     {
-        var parameters = new DialogParameters();        
-        double alreadyAdded = AlreadyAdded > 100 ? 100 : AlreadyAdded;
-        double leftValue = MaxValue - alreadyAdded;
+        var parameters = new DialogParameters();
+        double alreadyAdded = MaxValue - leftValue;
         parameters.Add("Mensagem", $"Não é possível adicionar {value}%, pois já existem {alreadyAdded}% adicionados, restam somente {leftValue}% para serem adicionados.");
         var dialogResult = Dialog.Show<MessageDialog>("Atenção!", parameters, dialogOptions);
     }
@@ -266,14 +300,14 @@
     private void OpenNewAssetClassValidationMessageModal()
     {
         var parameters = new DialogParameters();
-        parameters.Add("Mensagem", $"Não é possível adicionar mais uma classe de ativos pois já foram adicionadas 100% outras classes.");
+        parameters.Add("Mensagem", $"Não é possível adicionar mais um setor, pois já foram adicionados 100% em outros setores.");
         var dialogResult = Dialog.Show<MessageDialog>("Atenção!", parameters, dialogOptions);
     }
 
-    private void OpenDuplicatedAssetClassValidationMessageModal(string assetClass)
+    private void OpenDuplicatedAssetClassValidationMessageModal(string sectorName)
     {
         var parameters = new DialogParameters();
-        parameters.Add("Mensagem", $"Não é possível adicionar a classe de ativos {assetClass}, pois a mesma já foi adicionada.");
+        parameters.Add("Mensagem", $"Não é possível adicionar o setor {sectorName}, pois o mesmo já foi adicionado.");
         var dialogResult = Dialog.Show<MessageDialog>("Atenção!", parameters, dialogOptions);
     }
 
@@ -281,6 +315,13 @@
     {
         var parameters = new DialogParameters();
         parameters.Add("Mensagem", $"Antes de informar o percentual, por favor selecione uma classe de ativos.");
+        var dialogResult = Dialog.Show<MessageDialog>("Atenção!", parameters, dialogOptions);
+    }
+
+    private void RequiredSectorSelecionValidationMessageModal()
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("Mensagem", $"Antes de informar o percentual, por favor selecione um setor.");
         var dialogResult = Dialog.Show<MessageDialog>("Atenção!", parameters, dialogOptions);
     }
 }
