@@ -13,4 +13,9 @@
     <PackageReference Include="MudBlazor" Version="6.19.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Investing.Services\Investing.Services.csproj" />
+    <ProjectReference Include="..\Investing.Shared\Investing.Shared.csproj" />
+  </ItemGroup>
+
 </Project>

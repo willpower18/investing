@@ -1,0 +1,108 @@
+﻿@using Investing.WebApp.Models
+@inject Investing.Shared.Services.IFinancialAssetQueryService _assetsQueryService
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" sm="12">
+                <MudForm>
+                    <MudSelect T="int" Label="Classe de Ativos" @bind-Value="@AssetClassId" SelectedValuesChanged="LoadSectorsByAssetClass" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true" RequiredError="O campo classe de ativos deve ser selecionado">
+                        <MudSelectItem Value="0">Selecione uma classe de ativos</MudSelectItem>
+                        @foreach (var assetClass in AssetClasses)
+                        {
+                            <MudSelectItem Value="@(assetClass.Key)">@(assetClass.Value)</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <br />
+                    <MudSelect T="int" Label="Setores" Placeholder="Setor" @bind-Value="SectorId" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true" RequiredError="O campo setor deve ser selecionado">
+                        <MudSelectItem Value="0">Selecione um setor</MudSelectItem>
+                        @foreach (var sector in SectorsByAssetClass)
+                        {
+                            <MudSelectItem Value="@(sector.SectorId)">@(sector.Name)</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudTextField T="string" Label="Ticker" Required="true" @bind-Value="Ticker" OnBlur="GetAssetDetailByTicker" RequiredError="O campo ticker é obrigatório" />
+                    <MudGrid>
+                        <MudItem sm="9">
+                            <MudTextField T="string" Label="Nome" Required="false" ReadOnly="true" />
+                        </MudItem>
+                        <MudItem sm="3">
+                            <MudImage Src="@LogoUrl" Alt="Asset Logo" Elevation="25" Class="rounded-lg" />
+                        </MudItem>
+                    </MudGrid>
+                </MudForm>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Voltar</MudButton>
+        <MudButton Color="Color.Primary">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private int AssetClassId = 0;
+    private int SectorId = 0;
+    private string Ticker = string.Empty;
+    private string Name = string.Empty;
+    private string LogoUrl = string.Empty;
+
+    private List<KeyValuePair<int, string>> AssetClasses = new();
+    Sector SectorForInitialization = new Sector();
+    List<Sector> AllSectors = new List<Sector>();
+    List<Sector> SectorsByAssetClass = new List<Sector>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        SectorForInitialization = new Sector();
+        AllSectors = SectorForInitialization.ObterListaDeSetores();        
+        CreateOptionsList();
+    }
+
+    private void CreateOptionsList()
+    {
+        AssetClasses = new();
+        AssetClasses.Add(new KeyValuePair<int, string>(1, "Ações"));
+        AssetClasses.Add(new KeyValuePair<int, string>(2, "Investimentos Internacionais"));
+        AssetClasses.Add(new KeyValuePair<int, string>(3, "Fundos Imboliários"));
+        AssetClasses.Add(new KeyValuePair<int, string>(4, "Renda Fixa"));
+    }
+
+    private void LoadSectorsByAssetClass()
+    {
+        if(AssetClassId == 0)
+        {
+            SectorsByAssetClass = new List<Sector>();
+            return;
+        }
+
+        SectorsByAssetClass = AllSectors.Where(s => s.AssetClassId == AssetClassId).ToList();
+    }
+
+    private async Task GetAssetDetailByTicker()
+    {
+        if (string.IsNullOrWhiteSpace(Ticker))
+            return;
+
+        try
+        {
+            var response = await _assetsQueryService.GetAssetDetailsBySymbol(Ticker);
+            if (response != null)
+            {
+                Name = response.LongName;
+                LogoUrl = response.LogoUrl;
+            }
+        }
+        catch(Exception ex)
+        {
+            
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

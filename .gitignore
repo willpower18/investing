@@ -1,3 +1,7 @@
 .vs
 Investing.WebApp/bin
 Investing.WebApp/obj
+/Investing.Services/bin/Debug/net8.0
+/Investing.Services/obj
+/Investing.Shared/bin/Debug/net8.0
+/Investing.Shared/obj
