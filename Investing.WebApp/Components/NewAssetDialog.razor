@@ -21,10 +21,12 @@
                             <MudSelectItem Value="@(sector.SectorId)">@(sector.Name)</MudSelectItem>
                         }
                     </MudSelect>
+                    <br />
                     <MudTextField T="string" Label="Ticker" Required="true" @bind-Value="Ticker" OnBlur="GetAssetDetailByTicker" RequiredError="O campo ticker é obrigatório" />
+                    <br/>
                     <MudGrid>
                         <MudItem sm="9">
-                            <MudTextField T="string" Label="Nome" Required="false" ReadOnly="true" />
+                            <MudTextField T="string" Label="Nome" @bind-Value="Name" Required="false" ReadOnly="true" />
                         </MudItem>
                         <MudItem sm="3">
                             <MudImage Src="@LogoUrl" Alt="Asset Logo" Elevation="25" Class="rounded-lg" />

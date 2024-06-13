@@ -24,39 +24,43 @@ namespace Investing.Services.AssetServices
 
         public async Task<AssetDetail> GetAssetDetailsBySymbol(string symbol, CancellationToken cancellationToken = default)
         {
-            var response = await _httpClient.GetAsync($"{symbol}?token=${_apiToken}");
+            var response = await _httpClient.GetAsync($"{symbol}?token={_apiToken}");
             if(response.IsSuccessStatusCode)
             {
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 try
                 {
-                    var responseItems = JsonSerializer.Deserialize<List<AssetDetail>>(jsonResponse);
+                    var deserializedResponse = JsonSerializer.Deserialize<BrApiAssetDetailSuccesResult>(jsonResponse);
+                    var responseItems = deserializedResponse.Results;
                     if (responseItems != null && responseItems.Any())
                         return responseItems.FirstOrDefault();
                     else
                         return null;
                 }
                 catch(Exception ex)
-                {
+                {                    
                     throw new Exception($"Não foi possível deserializar o retorno do serviço. Erro original: {ex.Message}");
                 }
             }
             else
             {
-                throw new Exception($"Não foi possível consultar o serviço, Status Code retornado: {response.StatusCode}");
+                var jsonErrorResponse = await response.Content.ReadAsStringAsync();
+                var errorResponse = JsonSerializer.Deserialize<BrApiError>(jsonErrorResponse);
+                throw new Exception($"Não foi possível consultar o serviço, Status Code retornado: {response.StatusCode}. Erro Retornado: {errorResponse.Message}");
             }
         }
 
         public async Task<IEnumerable<AssetDetail>> GetAssetsByType(EAssetType assetType, CancellationToken cancellationToken = default)
         {
             string type = GetAssetTypeString(assetType);
-            var response = await _httpClient.GetAsync($"list?type={type}&token=${_apiToken}");
+            var response = await _httpClient.GetAsync($"list?type={type}&token={_apiToken}");
             if (response.IsSuccessStatusCode)
             {
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 try
                 {
-                    var responseItems = JsonSerializer.Deserialize<List<BrStockAssetList>>(jsonResponse);
+                    var deserializedResponse = JsonSerializer.Deserialize<BrApiListAssetsSuccessResult>(jsonResponse); 
+                    var responseItems = deserializedResponse.Stocks;
                     if (responseItems != null && responseItems.Any())
                     {
                         var assets = new List<AssetDetail>();
@@ -85,7 +89,9 @@ namespace Investing.Services.AssetServices
             }
             else
             {
-                throw new Exception($"Não foi possível consultar o serviço, Status Code retornado: {response.StatusCode}");
+                var jsonErrorResponse = await response.Content.ReadAsStringAsync();
+                var errorResponse = JsonSerializer.Deserialize<BrApiError>(jsonErrorResponse);
+                throw new Exception($"Não foi possível consultar o serviço, Status Code retornado: {response.StatusCode}. Erro Retornado: {errorResponse.Message}");
             }
         }
 
@@ -103,13 +109,14 @@ namespace Investing.Services.AssetServices
                 counter++;
             }
 
-            var response = await _httpClient.GetAsync($"{symbol.ToString()}?token=${_apiToken}");
+            var response = await _httpClient.GetAsync($"{symbol.ToString()}?token={_apiToken}");
             if (response.IsSuccessStatusCode)
             {
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 try
                 {
-                    var responseItems = JsonSerializer.Deserialize<List<AssetDetail>>(jsonResponse);
+                    var deserializedResponse = JsonSerializer.Deserialize<BrApiAssetDetailSuccesResult>(jsonResponse);
+                    var responseItems = deserializedResponse.Results;
                     if (responseItems != null && responseItems.Any())
                         return responseItems.ToList();
                     else
@@ -122,7 +129,9 @@ namespace Investing.Services.AssetServices
             }
             else
             {
-                throw new Exception($"Não foi possível consultar o serviço, Status Code retornado: {response.StatusCode}");
+                var jsonErrorResponse = await response.Content.ReadAsStringAsync();
+                var errorResponse = JsonSerializer.Deserialize<BrApiError>(jsonErrorResponse);
+                throw new Exception($"Não foi possível consultar o serviço, Status Code retornado: {response.StatusCode}. Erro Retornado: {errorResponse.Message}");
             }
         }
 
