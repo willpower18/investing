@@ -5,9 +5,11 @@ VisualStudioVersion = 17.9.34902.65
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Investing.WebApp", "Investing.WebApp\Investing.WebApp.csproj", "{DCE22DF5-5BEF-4D74-A121-5330ACAD1571}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Investing.Shared", "Investing.Shared\Investing.Shared.csproj", "{2C1C503C-68FA-4A5A-893B-311CCD959BB7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Investing.Shared", "Investing.Shared\Investing.Shared.csproj", "{2C1C503C-68FA-4A5A-893B-311CCD959BB7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Investing.Services", "Investing.Services\Investing.Services.csproj", "{64A6E13F-CF4A-4094-9F91-35CF4123FFA4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Investing.Services", "Investing.Services\Investing.Services.csproj", "{64A6E13F-CF4A-4094-9F91-35CF4123FFA4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Investing.Infrastructure", "Investing.Infrastructure\Investing.Infrastructure.csproj", "{06CF1F4A-DCCE-4231-AFA9-EDECDEBF6F2D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{64A6E13F-CF4A-4094-9F91-35CF4123FFA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64A6E13F-CF4A-4094-9F91-35CF4123FFA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64A6E13F-CF4A-4094-9F91-35CF4123FFA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06CF1F4A-DCCE-4231-AFA9-EDECDEBF6F2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06CF1F4A-DCCE-4231-AFA9-EDECDEBF6F2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06CF1F4A-DCCE-4231-AFA9-EDECDEBF6F2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06CF1F4A-DCCE-4231-AFA9-EDECDEBF6F2D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

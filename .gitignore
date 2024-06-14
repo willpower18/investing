@@ -5,3 +5,5 @@ Investing.WebApp/obj
 /Investing.Services/obj
 /Investing.Shared/bin/Debug/net8.0
 /Investing.Shared/obj
+/Investing.Infrastructure/bin/Debug/net8.0
+/Investing.Infrastructure/obj

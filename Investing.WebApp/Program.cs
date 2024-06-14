@@ -1,8 +1,14 @@
+using Investing.Infrastructure.Entities;
 using Investing.Services.AssetServices;
 using Investing.Shared.Services;
+using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Connection String to the container
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), x => x.MigrationsAssembly("Investing.Infrastructure")));
 
 // Add services to the container.
 builder.Services.AddRazorPages();
