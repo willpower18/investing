@@ -10,4 +10,8 @@
     <PackageReference Include="Flunt" Version="2.0.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Investing.Shared\Investing.Shared.csproj" />
+  </ItemGroup>
+
 </Project>

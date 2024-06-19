@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Investing.Shared", "Investi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Investing.Services", "Investing.Services\Investing.Services.csproj", "{64A6E13F-CF4A-4094-9F91-35CF4123FFA4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Investing.Infrastructure", "Investing.Infrastructure\Investing.Infrastructure.csproj", "{06CF1F4A-DCCE-4231-AFA9-EDECDEBF6F2D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Investing.Infrastructure", "Investing.Infrastructure\Investing.Infrastructure.csproj", "{06CF1F4A-DCCE-4231-AFA9-EDECDEBF6F2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Investing.Domain", "Investing.Domain\Investing.Domain.csproj", "{5B8A21F5-6FB1-4B2B-A342-E0E19A8A9E18}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{06CF1F4A-DCCE-4231-AFA9-EDECDEBF6F2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06CF1F4A-DCCE-4231-AFA9-EDECDEBF6F2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06CF1F4A-DCCE-4231-AFA9-EDECDEBF6F2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B8A21F5-6FB1-4B2B-A342-E0E19A8A9E18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B8A21F5-6FB1-4B2B-A342-E0E19A8A9E18}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B8A21F5-6FB1-4B2B-A342-E0E19A8A9E18}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B8A21F5-6FB1-4B2B-A342-E0E19A8A9E18}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
