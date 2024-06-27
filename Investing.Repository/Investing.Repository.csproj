@@ -8,7 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.0.1" />
-    <PackageReference Include="Flunt" Version="2.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Investing.Domain\Investing.Domain.csproj" />
+    <ProjectReference Include="..\Investing.Infrastructure\Investing.Infrastructure.csproj" />
+    <ProjectReference Include="..\Investing.Shared\Investing.Shared.csproj" />
   </ItemGroup>
 
 </Project>

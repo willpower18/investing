@@ -9,3 +9,5 @@ Investing.WebApp/obj
 /Investing.Infrastructure/obj
 /Investing.Domain/bin/Debug/net8.0
 /Investing.Domain/obj
+/Investing.Repository/obj
+/Investing.Repository/bin/Debug/net8.0

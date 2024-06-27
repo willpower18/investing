@@ -19,7 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Investing.Domain\Investing.Domain.csproj" />
     <ProjectReference Include="..\Investing.Infrastructure\Investing.Infrastructure.csproj" />
+    <ProjectReference Include="..\Investing.Repository\Investing.Repository.csproj" />
     <ProjectReference Include="..\Investing.Services\Investing.Services.csproj" />
     <ProjectReference Include="..\Investing.Shared\Investing.Shared.csproj" />
   </ItemGroup>
