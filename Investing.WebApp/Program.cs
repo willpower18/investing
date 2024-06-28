@@ -1,6 +1,8 @@
+using Investing.Domain.Repositories;
 using Investing.Infrastructure.Entities;
 using Investing.Repository.Configuration;
 using Investing.Repository.Mappings;
+using Investing.Repository.Repositories;
 using Investing.Services.AssetServices;
 using Investing.Shared.Mappings;
 using Investing.Shared.Services;
@@ -25,6 +27,11 @@ builder.Services.AddScoped<IMapping<Investing.Domain.Entities.AssetClass, Invest
 builder.Services.AddScoped<IMapping<Investing.Domain.Entities.Sector, Investing.Infrastructure.Entities.Sector>, SectorMapping>();
 builder.Services.AddScoped<IMapping<Investing.Domain.Entities.SectorConfiguration, Investing.Infrastructure.Entities.SectorConfiguration>, SectorConfigurationMapping>();
 builder.Services.AddScoped<IMapping<Investing.Domain.Entities.Wallet, Investing.Infrastructure.Entities.Wallet>, WalletMapping>();
+builder.Services.AddScoped<IAssetRepository, AssetRepository>();
+builder.Services.AddScoped<IAssetClassRepository, AssetClassRepository>();
+builder.Services.AddScoped<ISectorRepository, SectorRepository>();
+builder.Services.AddScoped<ISectorConfigurationRepository, ISectorConfigurationRepository>();
+builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 
 var app = builder.Build();
 
