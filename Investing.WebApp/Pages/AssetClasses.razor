@@ -1,7 +1,9 @@
 ﻿@page "/assetClasses"
+@using Investing.Application.Interfaces.Gateways
 @using Investing.WebApp.Components
 @using System.Linq;
 @inject IDialogService Dialog
+@inject IApplicationServiceGateway<Investing.Domain.Entities.AssetClass> _assetClassService;
 
 <MudGrid>
     <MudItem xs="12">
@@ -44,7 +46,7 @@
 
 @code {
 
-    public int Id { get; set; }
+    public string Id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
 
@@ -52,15 +54,17 @@
 
     protected override async Task OnInitializedAsync()
     {
-        assets = new List<AssetClasses>(){
-            new AssetClasses(){ Id = 1, Name = "Ações Brasileiras" },
-            new AssetClasses(){ Id = 2, Name = "Ações Internacionais" },
-            new AssetClasses(){ Id = 3, Name = "Real State" },
-            new AssetClasses(){ Id = 4, Name = "Renda Fixa" }
-        };
+        var serviceResult = await _assetClassService.GetActiveRecords();
+        if (!serviceResult.Succed)
+        {
+            ShowErrorMessageModal(serviceResult.CompiledErrorMessages);
+            return;
+        }
+
+        assets = ConvertAssetClasses(serviceResult.Results);
     }    
 
-    private async Task RemoverItem(int id)
+    private async Task RemoverItem(string id)
     {
         var options = new DialogOptions
         {
@@ -81,7 +85,7 @@
 
     }
 
-    private void RemoveItem(int id)
+    private void RemoveItem(string id)
     {
         var item = assets.Where(i => i.Id == id).FirstOrDefault();
         if (item != null)
@@ -101,5 +105,42 @@
         };
 
         Dialog.Show<NewAssetClassDialog>("Nova Classe de Ativos", options);       
+    }
+
+    DialogOptions errorDialogOptions = new DialogOptions
+        {
+            FullWidth = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            CloseButton = false,
+            DisableBackdropClick = true,
+            NoHeader = false,
+            Position = DialogPosition.TopCenter,
+            CloseOnEscapeKey = false
+        };
+
+    private void ShowErrorMessageModal(string error)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("Mensagem", $"Ocorreu um erro ao carregar a lista de classes de ativo. Erro original: {error}");
+        var dialogResult = Dialog.Show<MessageDialog>("Atenção!", parameters, errorDialogOptions);
+    }
+
+    private List<AssetClasses> ConvertAssetClasses(IEnumerable<Domain.Entities.AssetClass> assetClasses)
+    {
+        List<AssetClasses> viewAssetClasses = new List<AssetClasses>();
+
+        if(assetClasses != null)
+        {
+            foreach(var assetClass in assetClasses)
+            {
+                viewAssetClasses.Add(new AssetClasses() { 
+                    Id = assetClass.Id.ToString(), 
+                    Name = assetClass.Name, 
+                    Description = assetClass.Description  
+                });
+            }
+        }
+
+        return viewAssetClasses;
     }
 }

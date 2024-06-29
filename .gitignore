@@ -11,3 +11,5 @@ Investing.WebApp/obj
 /Investing.Domain/obj
 /Investing.Repository/obj
 /Investing.Repository/bin/Debug/net8.0
+/Investing.Application/bin/Debug/net8.0
+/Investing.Application/obj
