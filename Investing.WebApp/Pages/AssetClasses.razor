@@ -2,6 +2,7 @@
 @using Investing.Application.Interfaces.Gateways
 @using Investing.WebApp.Components
 @using System.Linq;
+@using Investing.WebApp.Models
 @inject IDialogService Dialog
 @inject IApplicationServiceGateway<Investing.Domain.Entities.AssetClass> _assetClassService;
 
@@ -19,22 +20,32 @@
             <MudCardContent>
                 <MudGrid>
                     <MudItem xs="12">
-                        <MudTable Items="@assets" Bordered="true" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Primary">
-                            <HeaderContent>
-                                <MudTh>Id</MudTh>
-                                <MudTh>Nome</MudTh>
-                                <MudTh>Descrição</MudTh>
-                                <MudTh>Ações</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd DataLabel="Nr">@context.Id</MudTd>
-                                <MudTd DataLabel="Name">@context.Name</MudTd>
-                                <MudTd DataLabel="Name">@context.Description</MudTd>
-                                <MudTd DataLabel="Ações">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="() => RemoverItem(context.Id)" Color="Color.Error"></MudIconButton>
-                                </MudTd>
-                            </RowTemplate>
-                        </MudTable>
+                        @if (!dataLoaded)
+                        {
+                            <MudOverlay Visible="showOverlay" DarkBackground="true" Absolute="true">
+                                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                            </MudOverlay>
+                        }
+                        else
+                        {
+                            <MudTable Items="@assets" Bordered="true" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Primary">
+                                <HeaderContent>
+                                    <MudTh>Id</MudTh>
+                                    <MudTh>Nome</MudTh>
+                                    <MudTh>Descrição</MudTh>
+                                    <MudTh>Ações</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Nr">@context.Id</MudTd>
+                                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                                    <MudTd DataLabel="Name">@context.Description</MudTd>
+                                    <MudTd DataLabel="Ações" Class="d-flex align-center justify-center">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"></MudIconButton>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="() => RemoverItem(context.Id)" Color="Color.Error"></MudIconButton>
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }                        
                     </MudItem>
                 </MudGrid>                
             </MudCardContent>
@@ -51,18 +62,29 @@
     public string Description { get; set; }
 
     private List<AssetClasses> assets = new List<AssetClasses>();
+    private bool dataLoaded;
+    private bool showOverlay;
 
     protected override async Task OnInitializedAsync()
     {
+        await GetRecords();
+    }    
+
+    private async Task GetRecords()
+    {
+        ShowLoading();
+
         var serviceResult = await _assetClassService.GetActiveRecords();
         if (!serviceResult.Succed)
         {
-            ShowErrorMessageModal(serviceResult.CompiledErrorMessages);
+            HideLoading();
+            ShowErrorMessageModal($"Ocorreu um erro ao carregar a lista de classes de ativo. Erro original: {serviceResult.CompiledErrorMessages}");
             return;
         }
 
         assets = ConvertAssetClasses(serviceResult.Results);
-    }    
+        HideLoading();
+    }
 
     private async Task RemoverItem(string id)
     {
@@ -92,7 +114,7 @@
             assets.Remove(item);
     }
 
-    private void OpenDialog()
+    private async Task OpenDialog()
     {
         var options = new DialogOptions { 
             FullWidth = true,
@@ -104,7 +126,16 @@
             CloseOnEscapeKey = true
         };
 
-        Dialog.Show<NewAssetClassDialog>("Nova Classe de Ativos", options);       
+        var dialogResult = Dialog.Show<NewAssetClassDialog>("Nova Classe de Ativos", options);
+        var result = await dialogResult.Result;
+        if (!result.Cancelled)
+        {
+            var operationResult = (DefaultDialogResult)result.Data;
+            if (operationResult.Succed)
+                await GetRecords();
+            else
+                ShowErrorMessageModal($"Ocorreu um erro ao cadastrar a classe de ativos. Mensagem Original: {operationResult.Message}");
+        }        
     }
 
     DialogOptions errorDialogOptions = new DialogOptions
@@ -121,8 +152,20 @@
     private void ShowErrorMessageModal(string error)
     {
         var parameters = new DialogParameters();
-        parameters.Add("Mensagem", $"Ocorreu um erro ao carregar a lista de classes de ativo. Erro original: {error}");
+        parameters.Add("Mensagem", error);
         var dialogResult = Dialog.Show<MessageDialog>("Atenção!", parameters, errorDialogOptions);
+    }
+
+    private void ShowLoading()
+    {
+        dataLoaded = false;
+        showOverlay = true;
+    }
+
+    private void HideLoading()
+    {
+        showOverlay = false;
+        dataLoaded = true;
     }
 
     private List<AssetClasses> ConvertAssetClasses(IEnumerable<Domain.Entities.AssetClass> assetClasses)

@@ -34,7 +34,7 @@ builder.Services.AddScoped<IMapping<Investing.Domain.Entities.Wallet, Investing.
 builder.Services.AddScoped<IAssetRepository, AssetRepository>();
 builder.Services.AddScoped<IAssetClassRepository, AssetClassRepository>();
 builder.Services.AddScoped<ISectorRepository, SectorRepository>();
-builder.Services.AddScoped<ISectorConfigurationRepository, ISectorConfigurationRepository>();
+builder.Services.AddScoped<ISectorConfigurationRepository, SectorConfigurationRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IApplicationServiceGateway<Investing.Domain.Entities.AssetClass>, AssetClassGateway>();
 

@@ -1,22 +1,77 @@
-﻿<MudDialog>
+﻿@using Investing.Application.Interfaces.Gateways
+@using Investing.WebApp.Models
+@inject IApplicationServiceGateway<Investing.Domain.Entities.AssetClass> _assetClassService;
+
+<MudDialog>
     <DialogContent>
         <MudGrid>
             <MudItem xs="12" sm="12">
                 <MudForm>
-                    <MudTextField T="string" Label="Nome" Required="true" RequiredError="O campo nome é obrigatório" />
-                    <MudTextField T="string" Label="Descrição" Required="true" RequiredError="O campo descrição é obrigatório" />
+                    <MudTextField @bind-Value="Id" Style="display:none;"></MudTextField>
+                    <MudTextField @bind-Value="Name" T="string" Label="Nome" Required="true" RequiredError="O campo nome é obrigatório" />
+                    <MudTextField @bind-Value="Description" T="string" Label="Descrição" Required="true" RequiredError="O campo descrição é obrigatório" />
                 </MudForm>
             </MudItem>
         </MudGrid>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Voltar</MudButton>
-        <MudButton Color="Color.Primary">Salvar</MudButton>
+        <MudButton OnClick="Save" Color="Color.Primary">Salvar</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }    
+
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+
+    public bool Succed { get; set; }
+    public string Message { get; set; }
+
+    public async Task Save()
+    {
+        string operation = string.Empty;
+        IApplicationServiceCommandResult result = null;
+        if (string.IsNullOrWhiteSpace(Id))
+        {
+            operation = "Cadastrada";
+            Domain.Entities.AssetClass assetClass = new Domain.Entities.AssetClass(Name, Description);
+            result = await _assetClassService.Create(assetClass);
+        }
+        else
+        {
+            operation = "Atualizada";
+            Guid.TryParse(Id, out Guid assetClassId);
+            Domain.Entities.AssetClass assetClass = new Domain.Entities.AssetClass(assetClassId, Name, Description, Investing.Shared.GlobalEnumerators.EActiveStatus.Active);
+            result = await _assetClassService.Update(assetClass);
+        }
+
+        if (result.Succed)
+            Confirme($"Classe de ativos {operation} com Sucesso!");
+        else
+            Error(result.CompiledErrorMessages);
+    }
+
+    public void Confirme(string successMessage)
+    {
+        Succed = true;
+        Message = successMessage;
+        CloseDialog();
+    }
+
+    public void Error(string errorMessage)
+    {
+        Succed = false;
+        Message = errorMessage;
+        CloseDialog();
+    }
+
+    private void CloseDialog()
+    {
+        MudDialog.Close(DialogResult.Ok(new DefaultDialogResult { Succed = Succed, Message = Message }));
+    }
 
     private void Cancel()
     {

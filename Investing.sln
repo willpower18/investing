@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Investing.Domain", "Investi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Investing.Repository", "Investing.Repository\Investing.Repository.csproj", "{29018CC1-4EE8-49ED-B1C3-6392344EEA51}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Investing.Application", "Investing.Application\Investing.Application.csproj", "{FFF25958-7E4A-4B37-A791-1134E0335C49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Investing.Application", "Investing.Application\Investing.Application.csproj", "{FFF25958-7E4A-4B37-A791-1134E0335C49}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
