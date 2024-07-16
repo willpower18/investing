@@ -94,7 +94,7 @@ namespace Investing.Repository.Repositories
         {
             var asset = _map.MapFromDomainToInfrastructure(entity);
             _context.Asset.Add(asset);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);            
         }
 
         public async Task Update(Domain.Entities.Asset entity, CancellationToken cancellationToken = default)

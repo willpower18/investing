@@ -40,16 +40,16 @@
                                     <MudTd DataLabel="Name">@context.Name</MudTd>
                                     <MudTd DataLabel="Name">@context.Description</MudTd>
                                     <MudTd DataLabel="Ações" Class="d-flex align-center justify-center">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"></MudIconButton>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => EditItem(context.Id)" Color="Color.Primary"></MudIconButton>
                                         <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="() => RemoverItem(context.Id)" Color="Color.Error"></MudIconButton>
                                     </MudTd>
                                 </RowTemplate>
                             </MudTable>
-                        }                        
+                        }
                     </MudItem>
-                </MudGrid>                
+                </MudGrid>
             </MudCardContent>
-            <MudCardActions>                
+            <MudCardActions>
             </MudCardActions>
         </MudCard>
     </MudItem>
@@ -68,7 +68,7 @@
     protected override async Task OnInitializedAsync()
     {
         await GetRecords();
-    }    
+    }
 
     private async Task GetRecords()
     {
@@ -86,46 +86,72 @@
         HideLoading();
     }
 
+    private async Task EditItem(string id)
+    {
+        var asset = assets.Where(a => a.Id == id).FirstOrDefault();
+        if (asset != null)
+        {
+            var parameters = new DialogParameters<NewAssetClassDialog>
+            {
+                { x => x.Id, asset.Id },
+                { x => x.Name, asset.Name },
+                { x => x.Description, asset.Description }
+            };
+            var options = GetDialogOptions();
+            var dialogResult = Dialog.Show<NewAssetClassDialog>("Editar Classe de Ativos", parameters, options);
+            var result = await dialogResult.Result;
+            if (!result.Cancelled)
+            {
+                var operationResult = (DefaultDialogResult)result.Data;
+                if (operationResult.Succed)
+                    await GetRecords();
+                else
+                    ShowErrorMessageModal($"Ocorreu um erro ao atualizar a classe de ativos. Mensagem Original: {operationResult.Message}");
+            }
+        }
+    }
+
     private async Task RemoverItem(string id)
     {
         var options = new DialogOptions
-        {
-            FullWidth = true,
-            MaxWidth = MaxWidth.ExtraSmall,
-            CloseButton = false,
-            DisableBackdropClick = true,
-            NoHeader = false,
-            Position = DialogPosition.TopCenter,
-            CloseOnEscapeKey = false
-        };
+            {
+                FullWidth = true,
+                MaxWidth = MaxWidth.ExtraSmall,
+                CloseButton = false,
+                DisableBackdropClick = true,
+                NoHeader = false,
+                Position = DialogPosition.TopCenter,
+                CloseOnEscapeKey = false
+            };
 
         var dialogResult = Dialog.Show<ConfirmationDialog>("Confirmação", options);
         var result = await dialogResult.Result;
         bool.TryParse(result.Data.ToString(), out bool confirmado);
         if (!result.Cancelled && confirmado)
-            RemoveItem(id);
+            await RemoveItem(id);
 
     }
 
-    private void RemoveItem(string id)
+    private async Task RemoveItem(string id)
     {
-        var item = assets.Where(i => i.Id == id).FirstOrDefault();
-        if (item != null)
-            assets.Remove(item);
+        Guid.TryParse(id, out Guid assetClassId);
+        var serviceResult = await _assetClassService.Inactivate(assetClassId);
+        if (!serviceResult.Succed)
+        {
+            ShowErrorMessageModal($"Ocorreu um erro ao inativar a classe de ativos. Erro original: {serviceResult.CompiledErrorMessages}");
+            return;
+        }
+        else
+        {
+            var assetClass = assets.Where(a => a.Id == id).FirstOrDefault();
+            if (assetClass != null)
+                assets.Remove(assetClass);
+        }        
     }
 
     private async Task OpenDialog()
     {
-        var options = new DialogOptions { 
-            FullWidth = true,
-            MaxWidth = MaxWidth.Small,
-            CloseButton = true,
-            DisableBackdropClick = true,
-            NoHeader = false,
-            Position = DialogPosition.Center,
-            CloseOnEscapeKey = true
-        };
-
+        var options = GetDialogOptions();
         var dialogResult = Dialog.Show<NewAssetClassDialog>("Nova Classe de Ativos", options);
         var result = await dialogResult.Result;
         if (!result.Cancelled)
@@ -135,7 +161,7 @@
                 await GetRecords();
             else
                 ShowErrorMessageModal($"Ocorreu um erro ao cadastrar a classe de ativos. Mensagem Original: {operationResult.Message}");
-        }        
+        }
     }
 
     DialogOptions errorDialogOptions = new DialogOptions
@@ -172,18 +198,35 @@
     {
         List<AssetClasses> viewAssetClasses = new List<AssetClasses>();
 
-        if(assetClasses != null)
+        if (assetClasses != null)
         {
-            foreach(var assetClass in assetClasses)
+            foreach (var assetClass in assetClasses)
             {
-                viewAssetClasses.Add(new AssetClasses() { 
-                    Id = assetClass.Id.ToString(), 
-                    Name = assetClass.Name, 
-                    Description = assetClass.Description  
+                viewAssetClasses.Add(new AssetClasses()
+                {
+                    Id = assetClass.Id.ToString(),
+                    Name = assetClass.Name,
+                    Description = assetClass.Description
                 });
             }
         }
 
         return viewAssetClasses;
+    }
+
+    private DialogOptions GetDialogOptions()
+    {
+        var options = new DialogOptions
+        {
+            FullWidth = true,
+            MaxWidth = MaxWidth.Small,
+            CloseButton = true,
+            DisableBackdropClick = true,
+            NoHeader = false,
+            Position = DialogPosition.Center,
+            CloseOnEscapeKey = true
+        };
+
+        return options;
     }
 }

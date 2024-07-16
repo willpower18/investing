@@ -23,8 +23,11 @@
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }    
 
+    [Parameter]
     public string Id { get; set; }
+    [Parameter]
     public string Name { get; set; }
+    [Parameter]
     public string Description { get; set; }
 
     public bool Succed { get; set; }

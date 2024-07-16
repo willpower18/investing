@@ -21,6 +21,7 @@ namespace Investing.Repository.Repositories
         {
             var assetClasses = await _context.AssetClass
                .Where(a => a.Active == (int)EActiveStatus.Active)
+               .OrderBy(a => a.Name)
                .AsNoTracking()
                .ToListAsync(cancellationToken);
 
@@ -45,6 +46,7 @@ namespace Investing.Repository.Repositories
             var assetClass = _map.MapFromDomainToInfrastructure(entity);
             _context.AssetClass.Add(assetClass);
             await _context.SaveChangesAsync(cancellationToken);
+            _context.Entry(assetClass).State = EntityState.Detached;
         }
 
         public async Task Update(Domain.Entities.AssetClass entity, CancellationToken cancellationToken = default)
@@ -52,6 +54,7 @@ namespace Investing.Repository.Repositories
             var assetClass = _map.MapFromDomainToInfrastructure(entity);
             _context.AssetClass.Update(assetClass);
             await _context.SaveChangesAsync(cancellationToken);
+            _context.Entry(assetClass).State = EntityState.Detached;
         }
 
         public async Task Inactivate(Domain.Entities.AssetClass entity, CancellationToken cancellationToken = default)
