@@ -1,5 +1,6 @@
 ﻿using Investing.Domain.Repositories;
 using Investing.Infrastructure.Entities;
+using Investing.Shared.DataTransferObjects;
 using Investing.Shared.GlobalEnumerators;
 using Investing.Shared.Mappings;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,29 @@ namespace Investing.Repository.Repositories
             return _map.MapListFromInfrastructureToDomain(sectors);
         }
 
+        public async Task<IEnumerable<SectorWithAssetClassDTO>> GetActiveSectorsWithAssetClass(CancellationToken cancellationToken = default)
+        {
+            var sectors = await _context.Sector
+              .Where(a => a.Active == (int)EActiveStatus.Active)
+              .AsNoTracking()
+              .ToListAsync(cancellationToken);
+
+            var assetClassesIds = sectors.Select(s => s.AssetClassId).ToList();
+            var assetClasses = await _context.AssetClass.Where(a => assetClassesIds.Contains(a.Id)).AsNoTracking().ToListAsync(cancellationToken);
+
+            List<SectorWithAssetClassDTO> sectorsWithDetails = new List<SectorWithAssetClassDTO>();
+            AssetClass assetClass = null;
+            foreach(var sectorInfra in sectors)
+            {
+                Guid.TryParse(sectorInfra.AssetClassId, out Guid assetClassId);
+                Guid.TryParse(sectorInfra.Id, out Guid sectorId);
+                assetClass = assetClasses.Where(a => a.Id == sectorInfra.AssetClassId).FirstOrDefault();
+                sectorsWithDetails.Add(new SectorWithAssetClassDTO(sectorId, assetClassId, sectorInfra.Name, sectorInfra.Description, assetClass == null ? string.Empty : assetClass.Name));
+            }
+
+            return sectorsWithDetails;
+        }
+
         public async Task<Domain.Entities.Sector> GetById(Guid id, CancellationToken cancellationToken = default)
         {
             var sector = await _context.Sector
@@ -70,6 +94,6 @@ namespace Investing.Repository.Repositories
         {
             entity.Disable();
             await Update(entity, cancellationToken);
-        }
+        }        
     }
 }
