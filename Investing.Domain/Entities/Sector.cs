@@ -25,6 +25,12 @@ namespace Investing.Domain.Entities
         public Guid AssetClassId { get; private set; }
         public string Name { get; private set; }
         public string Description { get; private set; }
+        public string AssetClassName { get; private set; }
+
+        public void ProvideAssetClassName(string assetClassName)
+        {
+            AssetClassName = assetClassName;
+        }
 
         private void ValidateEntity()
         {

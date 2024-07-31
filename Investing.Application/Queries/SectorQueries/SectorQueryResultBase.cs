@@ -1,13 +1,12 @@
 ﻿using Investing.Application.Interfaces.Queries;
 using Investing.Domain.Entities;
-using Investing.Shared.DataTransferObjects;
 
 namespace Investing.Application.Queries.SectorQueries
 {
     public class SectorQueryResultBase : QueryResultBase, IQueryResult
     {
         private Sector _sector = null;
-        private IList<SectorWithAssetClassDTO> _sectors = new List<SectorWithAssetClassDTO>();
+        private IList<Sector> _sectors = new List<Sector>();
 
         public SectorQueryResultBase(string message) : base(message) { }
 
@@ -15,9 +14,9 @@ namespace Investing.Application.Queries.SectorQueries
 
         public Sector Result => _sector;
 
-        public IReadOnlyCollection<SectorWithAssetClassDTO> Results => _sectors.ToArray();
+        public IReadOnlyCollection<Sector> Results => _sectors.ToArray();
 
-        internal void AddEntitiesToResult(IEnumerable<SectorWithAssetClassDTO> entities)
+        internal void AddEntitiesToResult(IEnumerable<Sector> entities)
         {
             if (entities != null)
             {

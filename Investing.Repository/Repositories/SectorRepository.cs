@@ -1,6 +1,5 @@
 ﻿using Investing.Domain.Repositories;
 using Investing.Infrastructure.Entities;
-using Investing.Shared.DataTransferObjects;
 using Investing.Shared.GlobalEnumerators;
 using Investing.Shared.Mappings;
 using Microsoft.EntityFrameworkCore;
@@ -40,7 +39,7 @@ namespace Investing.Repository.Repositories
             return _map.MapListFromInfrastructureToDomain(sectors);
         }
 
-        public async Task<IEnumerable<SectorWithAssetClassDTO>> GetActiveSectorsWithAssetClass(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Domain.Entities.Sector>> GetActiveSectorsWithAssetClass(CancellationToken cancellationToken = default)
         {
             var sectors = await _context.Sector
               .Where(a => a.Active == (int)EActiveStatus.Active)
@@ -50,14 +49,19 @@ namespace Investing.Repository.Repositories
             var assetClassesIds = sectors.Select(s => s.AssetClassId).ToList();
             var assetClasses = await _context.AssetClass.Where(a => assetClassesIds.Contains(a.Id)).AsNoTracking().ToListAsync(cancellationToken);
 
-            List<SectorWithAssetClassDTO> sectorsWithDetails = new List<SectorWithAssetClassDTO>();
+            List<Domain.Entities.Sector> sectorsWithDetails = new List<Domain.Entities.Sector>();
             AssetClass assetClass = null;
-            foreach(var sectorInfra in sectors)
+            Domain.Entities.Sector sector = null;
+            foreach (var sectorInfra in sectors)
             {
                 Guid.TryParse(sectorInfra.AssetClassId, out Guid assetClassId);
                 Guid.TryParse(sectorInfra.Id, out Guid sectorId);
                 assetClass = assetClasses.Where(a => a.Id == sectorInfra.AssetClassId).FirstOrDefault();
-                sectorsWithDetails.Add(new SectorWithAssetClassDTO(sectorId, assetClassId, sectorInfra.Name, sectorInfra.Description, assetClass == null ? string.Empty : assetClass.Name));
+                sector = _map.MapFromInfrastructureToDomain(sectorInfra);
+                if (assetClass != null)
+                    sector.ProvideAssetClassName(assetClass.Name);
+
+                sectorsWithDetails.Add(sector);
             }
 
             return sectorsWithDetails;

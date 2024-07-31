@@ -9,7 +9,6 @@ using Investing.Services.AssetServices;
 using Investing.Shared.Mappings;
 using Investing.Shared.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
 using System.Reflection;
 
@@ -37,6 +36,7 @@ builder.Services.AddScoped<ISectorRepository, SectorRepository>();
 builder.Services.AddScoped<ISectorConfigurationRepository, SectorConfigurationRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IApplicationServiceGateway<Investing.Domain.Entities.AssetClass>, AssetClassGateway>();
+builder.Services.AddScoped<IApplicationServiceGateway<Investing.Domain.Entities.Sector>, SectorGateway>();
 
 AssemblyName applicationLayerName = new AssemblyName("Investing.Application");
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Load(applicationLayerName)));

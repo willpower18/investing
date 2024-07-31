@@ -21,7 +21,7 @@ namespace Investing.Application.Queries.SectorQueries.GetSectorById
 
                 var sector = await _sectorRepository.GetById(request.SectorId, cancellationToken);
                 if (sector == null)
-                    return null;
+                    return new GetSectorByIdResult("Erro", new List<string>() { "Sector was not found" });
 
                 var result = new GetSectorByIdResult("Sucesso!");
                 result.AddEntityToResult(sector);
