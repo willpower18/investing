@@ -1,7 +1,10 @@
 ﻿@page "/sectors"
+@using Investing.Application.Interfaces.Gateways
 @using Investing.WebApp.Components
 @using System.Linq;
+@using Investing.WebApp.Models
 @inject IDialogService Dialog
+@inject IApplicationServiceGateway<Investing.Domain.Entities.Sector> _sectorService;
 
 <MudGrid>
     <MudItem xs="12">
@@ -17,22 +20,32 @@
             <MudCardContent>
                 <MudGrid>
                     <MudItem xs="12">
-                        <MudTable Items="@sectors" Bordered="true" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Primary">
-                            <HeaderContent>
-                                <MudTh>Id</MudTh>
-                                <MudTh>Nome</MudTh>
-                                <MudTh>Classe de Ativos</MudTh>
-                                <MudTh>Ações</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd DataLabel="Nr">@context.Id</MudTd>
-                                <MudTd DataLabel="Name">@context.Name</MudTd>
-                                <MudTd DataLabel="Name">@context.AssetClass</MudTd>
-                                <MudTd DataLabel="Ações">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="() => RemoverItem(context.Id)" Color="Color.Error"></MudIconButton>
-                                </MudTd>
-                            </RowTemplate>
-                        </MudTable>
+                        @if (!dataLoaded)
+                        {
+                            <MudOverlay Visible="showOverlay" DarkBackground="true" Absolute="true">
+                                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                            </MudOverlay>
+                        }
+                        else
+                        {
+                            <MudTable Items="@sectors" Bordered="true" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Primary">
+                                <HeaderContent>
+                                    <MudTh>Id</MudTh>
+                                    <MudTh>Nome</MudTh>
+                                    <MudTh>Classe de Ativos</MudTh>
+                                    <MudTh>Ações</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Nr">@context.Id</MudTd>
+                                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                                    <MudTd DataLabel="Name">@context.AssetClass</MudTd>
+                                    <MudTd DataLabel="Ações" Class="d-flex align-center justify-center">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => EditItem(context.Id)" Color="Color.Primary"></MudIconButton>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="() => RemoverItem(context.Id)" Color="Color.Error"></MudIconButton>
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }                        
                     </MudItem>
                 </MudGrid>
             </MudCardContent>
@@ -44,28 +57,64 @@
 
 @code {
 
-    public int Id { get; set; }
+    public string Id { get; set; }
     public string Name { get; set; }
+    public string Description { get; set; }
     public string AssetClass { get; set; }
+    public string AssetClassId { get; set; }
 
     private List<Sectors> sectors = new List<Sectors>();
+    private bool dataLoaded;
+    private bool showOverlay;
 
     protected override async Task OnInitializedAsync()
     {
-        sectors = new List<Sectors>(){
-            new Sectors(){ Id = 1, Name = "Comodities", AssetClass = "Ações Brasileiras" },
-            new Sectors(){ Id = 2, Name = "Água e Saneamento", AssetClass = "Ações Brasileiras" },
-            new Sectors(){ Id = 3, Name = "Energia", AssetClass = "Ações Brasileiras" },
-            new Sectors(){ Id = 4, Name = "Financeiro", AssetClass = "Ações Brasileiras" },
-            new Sectors(){ Id = 5, Name = "Fundos de Fundos", AssetClass = "Fundos Imobiliários" },
-            new Sectors(){ Id = 6, Name = "Shoppings", AssetClass = "Fundos Imobiliários" },
-            new Sectors(){ Id = 7, Name = "Papel", AssetClass = "Fundos Imobiliários" },
-            new Sectors(){ Id = 8, Name = "Escritórios", AssetClass = "Fundos Imobiliários" },
-            new Sectors(){ Id = 9, Name = "Logística", AssetClass = "Fundos Imobiliários" }
-        };
+        await GetRecords();        
     }
 
-    private async Task RemoverItem(int id)
+    private async Task GetRecords()
+    {
+        ShowLoading();
+
+        var serviceResult = await _sectorService.GetActiveRecords();
+        if (!serviceResult.Succed)
+        {
+            HideLoading();
+            ShowErrorMessageModal($"Ocorreu um erro ao carregar a lista de classes de ativo. Erro original: {serviceResult.CompiledErrorMessages}");
+            return;
+        }
+
+        sectors = ConvertSectors(serviceResult.Results);
+        HideLoading();
+    }
+
+    private async Task EditItem(string id)
+    {
+        var sector = sectors.Where(a => a.Id == id).FirstOrDefault();
+        if (sector != null)
+        {
+            var parameters = new DialogParameters<NewSectorDialog>
+            {
+                { x => x.Id, sector.Id },
+                { x => x.Name, sector.Name },
+                { x => x.Description, sector.Description },
+                { x => x.AssetClassId, sector.AssetClassId}
+            };
+            var options = GetDialogOptions();
+            var dialogResult = Dialog.Show<NewSectorDialog>("Editar Setor", parameters, options);
+            var result = await dialogResult.Result;
+            if (!result.Cancelled)
+            {
+                var operationResult = (DefaultDialogResult)result.Data;
+                if (operationResult.Succed)
+                    await GetRecords();
+                else
+                    ShowErrorMessageModal($"Ocorreu um erro ao atualizar o setor. Mensagem Original: {operationResult.Message}");
+            }
+        }
+    }
+
+    private async Task RemoverItem(string id)
     {
         var options = new DialogOptions
             {
@@ -82,18 +131,76 @@
         var result = await dialogResult.Result;
         bool.TryParse(result.Data.ToString(), out bool confirmado);
         if (!result.Cancelled && confirmado)
-            RemoveItem(id);
+            await RemoveItem(id);
 
     }
 
-    private void RemoveItem(int id)
+    private async Task RemoveItem(string id)
     {
-        var item = sectors.Where(i => i.Id == id).FirstOrDefault();
-        if (item != null)
-            sectors.Remove(item);
+        Guid.TryParse(id, out Guid sectorId);
+        var serviceResult = await _sectorService.Inactivate(sectorId);
+        if (!serviceResult.Succed)
+        {
+            ShowErrorMessageModal($"Ocorreu um erro ao inativar o setor. Erro original: {serviceResult.CompiledErrorMessages}");
+            return;
+        }
+        else
+        {
+            var sector = sectors.Where(a => a.Id == id).FirstOrDefault();
+            if (sector != null)
+                sectors.Remove(sector);
+        }        
     }
 
-    private void OpenDialog()
+    private async Task OpenDialog()
+    {
+        var options = GetDialogOptions();
+        var dialogResult = Dialog.Show<NewSectorDialog>("Novo Setor", options);
+        var result = await dialogResult.Result;
+        if (!result.Cancelled)
+        {
+            var operationResult = (DefaultDialogResult)result.Data;
+            if (operationResult.Succed)
+                await GetRecords();
+            else
+                ShowErrorMessageModal($"Ocorreu um erro ao cadastrar o setor. Mensagem Original: {operationResult.Message}");
+        }
+    }
+
+    private List<Sectors> ConvertSectors(IEnumerable<Domain.Entities.Sector> sectors)
+    {
+        List<Sectors> viewSectors = new List<Sectors>();
+
+        if (sectors != null)
+        {
+            foreach (var sector in sectors)
+            {
+                viewSectors.Add(new Sectors()
+                    {
+                        Id = sector.Id.ToString(),
+                        Name = sector.Name,
+                        Description = sector.Description,
+                        AssetClass = sector.AssetClassName,
+                        AssetClassId = sector.AssetClassId.ToString()
+                    });
+            }
+        }
+
+        return viewSectors;
+    }
+
+    DialogOptions errorDialogOptions = new DialogOptions
+        {
+            FullWidth = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            CloseButton = false,
+            DisableBackdropClick = true,
+            NoHeader = false,
+            Position = DialogPosition.TopCenter,
+            CloseOnEscapeKey = false
+        };
+
+    private DialogOptions GetDialogOptions()
     {
         var options = new DialogOptions
             {
@@ -106,6 +213,25 @@
                 CloseOnEscapeKey = true
             };
 
-        Dialog.Show<NewSectorDialog>("Novo Setor", options);
+        return options;
+    }
+
+    private void ShowErrorMessageModal(string error)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("Mensagem", error);
+        var dialogResult = Dialog.Show<MessageDialog>("Atenção!", parameters, errorDialogOptions);
+    }
+
+    private void ShowLoading()
+    {
+        dataLoaded = false;
+        showOverlay = true;
+    }
+
+    private void HideLoading()
+    {
+        showOverlay = false;
+        dataLoaded = true;
     }
 }

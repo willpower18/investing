@@ -85,6 +85,7 @@ namespace Investing.Repository.Repositories
             var sector = _map.MapFromDomainToInfrastructure(entity);
             _context.Sector.Add(sector);
             await _context.SaveChangesAsync(cancellationToken);
+            _context.Entry(sector).State = EntityState.Detached;
         }
 
         public async Task Update(Domain.Entities.Sector entity, CancellationToken cancellationToken = default)
@@ -92,6 +93,7 @@ namespace Investing.Repository.Repositories
             var sector = _map.MapFromDomainToInfrastructure(entity);
             _context.Sector.Update(sector);
             await _context.SaveChangesAsync(cancellationToken);
+            _context.Entry(sector).State = EntityState.Detached;
         }
 
         public async Task Inactivate(Domain.Entities.Sector entity, CancellationToken cancellationToken = default)

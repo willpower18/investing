@@ -1,43 +1,116 @@
-﻿<MudDialog>
+﻿@using Investing.Application.Interfaces.Gateways
+@using Investing.WebApp.Models
+@inject IApplicationServiceGateway<Investing.Domain.Entities.Sector> _sectorService;
+@inject IApplicationServiceGateway<Investing.Domain.Entities.AssetClass> _assetClassService;
+
+<MudDialog>
     <DialogContent>
         <MudGrid>
             <MudItem xs="12" sm="12">
                 <MudForm>
-                    <MudTextField T="string" Label="Nome" Required="true" RequiredError="O campo nome é obrigatório" />
-                    <MudSelect T="int" Label="Classe de Ativos" Placeholder="Selecione uma classe de ativos" AnchorOrigin="Origin.BottomCenter">
+                    <MudTextField @bind-Value="Id" Style="display:none;"></MudTextField>
+                    <MudTextField @bind-Value="Name" T="string" Label="Nome" Required="true" RequiredError="O campo nome é obrigatório" />
+                    <MudSelect @bind-Value="AssetClassId" T="string" Label="Classe de Ativos" Placeholder="Selecione uma classe de ativos" AnchorOrigin="Origin.BottomCenter">
                         @foreach (var assetClass in AssetClasses)
                         {
                             <MudSelectItem Value="@(assetClass.Key)">@(assetClass.Value)</MudSelectItem>
                         }
                     </MudSelect>
-                    <MudTextField T="string" Label="Descrição" Required="true" RequiredError="O campo descrição é obrigatório" />
+                    <MudTextField @bind-Value="Description" T="string" Label="Descrição" Required="true" RequiredError="O campo descrição é obrigatório" />
                 </MudForm>
             </MudItem>
         </MudGrid>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Voltar</MudButton>
-        <MudButton Color="Color.Primary">Salvar</MudButton>
+        <MudButton OnClick="Save" Color="Color.Primary">Salvar</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
 
-    private List<KeyValuePair<int, string>> AssetClasses = new();
+    [Parameter]
+    public string Id { get; set; }
+    [Parameter]
+    public string Name { get; set; }
+    [Parameter]
+    public string Description { get; set; }
+    [Parameter]
+    public string AssetClassId { get; set; }
+
+    public bool Succed { get; set; }
+    public string Message { get; set; }
+
+    private List<KeyValuePair<string, string>> AssetClasses = new();
 
     protected override async Task OnInitializedAsync()
     {
-        CreateOptionsList();
+        await CreateOptionsList();
     }
 
-    private void CreateOptionsList()
+    private async Task CreateOptionsList()
     {
+        var serviceResult = await _assetClassService.GetActiveRecords();
+        if (!serviceResult.Succed)
+        {
+            Error("Não foi possível obter a lista de classes de ativo para cadastro/edição do setor");
+            return;
+        }
+
         AssetClasses = new();
-        AssetClasses.Add(new KeyValuePair<int, string>(1, "Ações"));
-        AssetClasses.Add(new KeyValuePair<int, string>(2, "Investimentos Internacionais"));
-        AssetClasses.Add(new KeyValuePair<int, string>(3, "Fundos Imboliários"));
-        AssetClasses.Add(new KeyValuePair<int, string>(4, "Renda Fixa"));
+        if(serviceResult.Results != null)
+        {
+            foreach(var assetClass in serviceResult.Results)
+            {
+                AssetClasses.Add(new KeyValuePair<string, string>(assetClass.Id.ToString(), assetClass.Name));
+            }
+        }
+    }
+
+    public async Task Save()
+    {
+        string operation = string.Empty;
+        IApplicationServiceCommandResult result = null;
+        if (string.IsNullOrWhiteSpace(Id))
+        {
+            operation = "Cadastrado";
+            Guid.TryParse(AssetClassId, out Guid assetClassId);
+            Domain.Entities.Sector sector = new Domain.Entities.Sector(assetClassId, Name, Description);
+            result = await _sectorService.Create(sector);
+        }
+        else
+        {
+            operation = "Atualizado";
+            Guid.TryParse(Id, out Guid sectorId);
+            Guid.TryParse(AssetClassId, out Guid assetClassId);
+            Domain.Entities.Sector sector = new Domain.Entities.Sector(sectorId, assetClassId, Name, Description, Investing.Shared.GlobalEnumerators.EActiveStatus.Active);
+            result = await _sectorService.Update(sector);
+        }
+
+        if (result.Succed)
+            Confirme($"Setor {operation} com Sucesso!");
+        else
+            Error(result.CompiledErrorMessages);
+    }
+
+    public void Confirme(string successMessage)
+    {
+        Succed = true;
+        Message = successMessage;
+        CloseDialog();
+    }
+
+    public void Error(string errorMessage)
+    {
+        Succed = false;
+        Message = errorMessage;
+        CloseDialog();
+    }
+
+    private void CloseDialog()
+    {
+        MudDialog.Close(DialogResult.Ok(new DefaultDialogResult { Succed = Succed, Message = Message }));
     }
 
     private void Cancel()

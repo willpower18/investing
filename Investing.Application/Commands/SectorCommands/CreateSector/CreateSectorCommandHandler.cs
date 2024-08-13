@@ -6,7 +6,12 @@ namespace Investing.Application.Commands.SectorCommands.CreateSector
     public sealed class CreateSectorCommandHandler : ICommandHandler<CreateSectorCommand, CreateSectorResult>
     {
         private readonly ISectorRepository _sectorRepository;
-       
+
+        public CreateSectorCommandHandler(ISectorRepository sectorRepository)
+        {
+            _sectorRepository = sectorRepository;
+        }
+
         public async Task<CreateSectorResult> Handle(CreateSectorCommand request, CancellationToken cancellationToken)
         {
             try
